@@ -7,22 +7,12 @@ import 'toolbox.dart';
 import 'package:web_scraper/web_scraper.dart';
 
 Future<void> Scrape() async {
-  var webScraper = WebScraper('https://www.amazon.ca');
-
-  await webScraper.loadWebPage(
-      '/s?k=cuisine&crid=1I57A0E72Z7JA&sprefix=cuisine%2Caps%2C94&ref=nb_sb_noss_1');
-
-  var s = webScraper.getElement("div > div > h2 > a > span", [""]);
-
+  var webScraper = WebScraper('https://fireemblem.fandom.com');
+  await webScraper.loadWebPage('/wiki/Fire_Emblem_(series)');
+  var s = webScraper.getElement("table.wikitable", [""]);
   for (var e in s) {
     print(e);
   }
-  //var webScraper = WebScraper('https://fireemblem.fandom.com');
-  // await webScraper.loadWebPage('');
-  //var s = webScraper.getElement("table > tbody > tr > th > i > a", [""]);
-  // for (var e in s) {
-  // print(e);
-  //}
 }
 
 void main() async {
