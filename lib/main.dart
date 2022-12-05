@@ -4,20 +4,14 @@ import 'package:fe_wiki/view/characterList.dart';
 import 'package:fe_wiki/view/updateDb.dart';
 import 'package:flutter/material.dart';
 import 'toolbox.dart';
-import 'package:web_scraper/web_scraper.dart';
+import 'DB.dart';
 
-Future<void> Scrape() async {
-  var webScraper = WebScraper('https://fireemblem.fandom.com');
-  await webScraper.loadWebPage('/wiki/Fire_Emblem_(series)');
-  var s = webScraper.getElement("table.wikitable", [""]);
-  for (var e in s) {
-    print(e);
-  }
-}
+DBControleur database = new DBControleur();
 
 void main() async {
-  await Scrape();
   runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  await database.CreateDB();
 }
 
 class MyApp extends StatelessWidget {
@@ -38,9 +32,9 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.purple,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Fire Emblem Wiki'),
     );
   }
 }
@@ -68,116 +62,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    buttonestination.add(const BouttonDestination(
-        text: "Dark Dragon and the blade of light",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: characterList(
-          game: "Dark Dragon and the blade of light",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Update",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: updateDb()));
-    buttonestination.add(const BouttonDestination(
-        text: "Mistery of the emblem",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Genealogie of the holy war",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Thracia 776",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Binding Blade",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Blazing Sword",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Sacred Stones",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Path of Radiance",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Radiant Dawn",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Shadow Dragon",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "New Mistery of the Emblem",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Awakening",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Fate",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Echoes",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-    buttonestination.add(const BouttonDestination(
-        text: "Three House",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
+    database.SelectDB();
+
+    for (var e in database.GetList() ?? []) {
+      buttonestination.add(BouttonDestinationGames(
+          text: e["name"],
+          textColor: Colors.black,
+          borderColor: Colors.deepPurple,
+          destination: characterList(
+            game: e["name"],
+          )));
+    }
 
     super.initState();
   }
@@ -195,6 +90,15 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => updateDb()));
+          },
+          child: Icon(
+            Icons.sync, // add custom icons also
+          ),
+        ),
       ),
       body: Center(
           // Center is a layout widget. It takes a single child and positions it

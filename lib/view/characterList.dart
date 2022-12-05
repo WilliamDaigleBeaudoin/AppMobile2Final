@@ -26,14 +26,14 @@ class _characterList extends State<characterList> {
 
   @override
   void initState() {
-    listPersonage.add(const BouttonDestination(
+    listPersonage.add(const BouttonDestinationGames(
         text: "Richard",
         textColor: Colors.black,
         borderColor: Colors.deepPurple,
         destination: character(
           perso: "Richard",
         )));
-    listPersonage.add(const BouttonDestination(
+    listPersonage.add(const BouttonDestinationGames(
         text: "Gaiden",
         textColor: Colors.black,
         borderColor: Colors.deepPurple,

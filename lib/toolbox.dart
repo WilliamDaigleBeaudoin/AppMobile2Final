@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:web_scraper/web_scraper.dart';
 
-
-class BouttonDestination extends StatefulWidget {
+class BouttonDestinationGames extends StatefulWidget {
   final String text;
   final Color textColor;
   final Color borderColor;
   final Widget destination;
-  const BouttonDestination(
+  const BouttonDestinationGames(
       {super.key,
       required this.text,
       this.textColor = Colors.white,
       this.borderColor = Colors.black,
       required this.destination});
   @override
-  State<BouttonDestination> createState() => _BouttonDestination();
+  State<BouttonDestinationGames> createState() => _BouttonDestinationGames();
 }
 
-class _BouttonDestination extends State<BouttonDestination> {
+class _BouttonDestinationGames extends State<BouttonDestinationGames> {
   @override
   Widget build(BuildContext context) {
     return Padding(
