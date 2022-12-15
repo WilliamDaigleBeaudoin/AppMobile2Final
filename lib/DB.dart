@@ -4,8 +4,27 @@ import 'dart:core';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 
-late List<Map>? gamelist = null;
 late final Database db;
+
+class Game {
+  final int id;
+  final String name;
+
+  const Game({required this.id, required this.name});
+}
+
+class Perso {
+  final int id;
+  final String name;
+  final int gameId;
+  final String growth;
+
+  const Perso(
+      {required this.id,
+      required this.name,
+      required this.gameId,
+      required this.growth});
+}
 
 class DBControleur {
   Future<bool> databaseExists(String path) =>
@@ -15,100 +34,91 @@ class DBControleur {
 // Open the database and store the reference.
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, 'FEWiki.db');
-// open the database
+
+    // open the database
     db = await openDatabase(path, version: 1,
         onCreate: (Database db, int version) async {
       // When creating the db, create the table
-      await db.execute('CREATE TABLE games (id INT AUTOINCREMENT, name TEXT)');
-    });
-    // open the database
-    /*Database databaseCharacter = await openDatabase(path, version: 1,
-        onCreate: (Database db, int version) async {
-      // When creating the db, create the table
       await db.execute(
-          'CREATE TABLE characterGame (id INTEGER PRIMARY KEY, name TEXT, gameId INTEGER)');
-    });*/
-    /* // open the database
-    Database databaseCharacterInfo = await openDatabase(path, version: 1,
-        onCreate: (Database db, int version) async {
-      // When creating the db, create the table
-      await db
-          .execute('CREATE TABLE characterInfo (id INTEGER PRIMARY KEY, name TEXT)');
-    });*/
+          'CREATE TABLE games (id INTEGER PRIMARY KEY, name TEXT, lien TEXT)');
+      await db.execute(
+          'CREATE TABLE characterGame (id INTEGER PRIMARY KEY, name TEXT, gameId INTEGER, growth TEXT)');
+      await db.execute(
+          'CREATE TABLE gameStat (id INTEGER PRIMARY KEY, stats TEXT, gameId INTEGER)');
+    });
   }
 
-  void InsertDB(String table, List<String> list) async {
+  void InsertDB(String table, var list) async {
 // Open the database and store the reference.
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, 'FEWiki.db');
-    db.insert("games", {"name": "test1234"});
-    /*switch (table) {
-      case "games":
-        // open the database
-        Database database = await openDatabase(path, version: 1);
-        // Insert some records in a transaction
-        await database.transaction((txn) async {
-          for (var e in list) {
-            await txn.rawInsert('INSERT INTO games (name) VALUES("$e")');
-          }
-        });
-        break;
-      default:
-        break;
-    }*/
-  }
 
-  void SelectDB() async {
-// Open the database and store the reference.
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, 'FEWiki.db');
-    if (databaseExists(path) == true) {
-// open the database
-      Database database = await openDatabase(path, version: 1);
-// Get the records
-      gamelist = await database.rawQuery('SELECT name FROM games');
+    db.delete(table);
+    int t = 1;
+    for (var e in list) {
+      e['attributes']['href'] = e['attributes']['href'].substring(26);
+      db.insert("games",
+          {"id": t, "name": e['title'], "lien": e['attributes']['href']});
+      t++;
     }
   }
 
-  List<Map>? GetList() {
-    return gamelist;
-  }
-
-  void InsertDBStuff(String dateTime, String nom, int score) async {
-    // Open the database and store the reference.
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, 'highscore.db');
-// open the database
-    Database database = await openDatabase(path, version: 1);
-    // Insert some records in a transaction
-    await database.transaction((txn) async {
-      await txn.rawInsert(
-          'INSERT INTO score(datetime, nom, score) VALUES("$dateTime", "$nom", $score)');
+  void InsertDBPerso(int table, String list) async {
+    db.insert("characterGame", {
+      "name": list.substring(0, list.indexOf(',')),
+      "gameId": table,
+      "growth": list
     });
   }
 
-  void DropDB() async {
-    // Open the database and store the reference.
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, 'highscore.db');
-// open the database
-    Database database = await openDatabase(path, version: 1);
-    // Insert some records in a transaction
-    await database.transaction((txn) async {
-      await txn.rawDelete('DELETE FROM score');
-    });
+  void InsertDBGameStats(int gameId, String stats) async {
+    db.insert("gameStat", {"stats": stats, "gameId": gameId});
   }
 
-  void UpdateDB(int id, String dateTime, String nom, int score) async {
-    // Open the database and store the reference.
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, 'highscore.db');
-// open the database
-    Database database = await openDatabase(path, version: 1);
-    // Insert some records in a transaction
-    await database.transaction((txn) async {
-      await txn.rawUpdate(
-          'UPDATE score SET datetime = "$dateTime", nom ="$nom", score = $score WHERE id = $id');
-    });
+  Future<List<Game>?> SelectDB() async {
+    if (db.isOpen) {
+// Query the table for all The Dogs.
+      final List<Map<String, dynamic>> maps = await db.query('games');
+      // Convert the List<Map<String, dynamic> into a List<Dog>.
+      return List.generate(maps.length, (i) {
+        return Game(
+          id: maps[i]['id'],
+          name: maps[i]['name'],
+        );
+      });
+    }
+  }
+
+  Future<List<Perso>?> SelectDBPersoGame(int gameId) async {
+    if (db.isOpen) {
+// Query the table for all The Dogs.
+      final List<Map<String, dynamic>> maps = await db
+          .rawQuery('SELECT * FROM characterGame WHERE gameId=?', [gameId]);
+
+      // Convert the List<Map<String, dynamic> into a List<Dog>.
+      return List.generate(maps.length, (i) {
+        return Perso(
+          id: maps[i]['id'],
+          name: maps[i]['name'],
+          gameId: maps[i]['gameId'],
+          growth: maps[i]['growth'],
+        );
+      });
+    }
+  }
+
+  Future<List<String>?> SelectDBGrowthList(int gameId) async {
+    if (db.isOpen) {
+// Query the table for all The Dogs.
+      final List<Map<String, dynamic>> maps =
+          await db.rawQuery('SELECT * FROM gameStat WHERE gameId=?', [gameId]);
+      return maps[0]["stats"].split(',');
+    }
+  }
+
+  void DropDBPersoGame() async {
+    db.delete("characterGame");
+  }
+
+  void DropDBStatsGame() async {
+    db.delete("gameStat");
   }
 }

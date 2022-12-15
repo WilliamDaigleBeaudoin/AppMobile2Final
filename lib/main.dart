@@ -9,9 +9,9 @@ import 'DB.dart';
 DBControleur database = new DBControleur();
 
 void main() async {
-  runApp(const MyApp());
   WidgetsFlutterBinding.ensureInitialized();
   await database.CreateDB();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -58,23 +58,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late List<Widget> buttonestination = [];
-
+  List<Game> listGame = [];
   @override
   void initState() {
-    database.SelectDB();
-
-    for (var e in database.GetList() ?? []) {
-      buttonestination.add(BouttonDestinationGames(
-          text: e["name"],
-          textColor: Colors.black,
-          borderColor: Colors.deepPurple,
-          destination: characterList(
-            game: e["name"],
-          )));
-    }
-
     super.initState();
+    select();
   }
 
   @override
@@ -92,8 +80,11 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
         leading: GestureDetector(
           onTap: () {
-            Navigator.push(
-                context, MaterialPageRoute(builder: (context) => updateDb()));
+            Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => updateDb()))
+                .then((value) {
+              select();
+            });
           },
           child: Icon(
             Icons.sync, // add custom icons also
@@ -105,10 +96,29 @@ class _MyHomePageState extends State<MyHomePage> {
           // in the middle of the parent.
           child: Container(
               child: Stack(children: <Widget>[
-        ListView(
-          children: buttonestination,
+        ListView.separated(
+          padding: const EdgeInsets.all(8),
+          itemCount: listGame == null ? 0 : listGame.length,
+          itemBuilder: (BuildContext context, int index) {
+            return BouttonDestinationGames(
+                text: listGame[index].name,
+                textColor: Colors.black,
+                borderColor: Colors.deepPurple,
+                destination: characterList(
+                  game: listGame[index].name,
+                  gameId: listGame[index].id,
+                ));
+          },
+          separatorBuilder: (BuildContext context, int index) =>
+              const Divider(),
         ),
       ]))),
     );
+  }
+
+  void select() async {
+    listGame = await database.SelectDB() ?? [];
+
+    setState(() {});
   }
 }

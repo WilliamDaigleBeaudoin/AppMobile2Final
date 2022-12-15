@@ -1,4 +1,5 @@
 import 'package:chaleno/chaleno.dart';
+import 'package:fe_wiki/view/character.dart';
 import 'package:flutter/material.dart';
 import '../toolbox.dart';
 import '../DB.dart';
@@ -26,21 +27,72 @@ class updateDb extends StatefulWidget {
 
 class _updateDb extends State<updateDb> {
   Future<void> Scrape() async {
-    var webScraper = WebScraper('https://fireemblem.fandom.com');
-    await webScraper.loadWebPage('/wiki/Fire_Emblem_(series)');
+    var webScraper = WebScraper('https://serenesforest.net');
+    await webScraper.loadWebPage('');
     var s = webScraper
-        .getElement("table.wikitable > tbody > tr > th > i > a", [""]);
+        .getElement("body > div > div > div > ul > li > ul > li > a", ["href"]);
 
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 14; i++) {
       s.removeLast();
     }
-    List<String> listGame = List<String>.filled(s.length, "");
-    for (var i = 0; i < s.length; i++) {
-      listGame[i] = s[i].values.first.substring(12);
+
+    for (var i = 0; i < 16; i++) {
+      s.removeAt(0);
     }
-    database.InsertDB("games", listGame);
-    database.SelectDB();
+    s.removeAt(5);
+    s.removeAt(15);
+    s.removeAt(15);
+    s.removeAt(3);
+    s.removeAt(11);
+    s.removeAt(11);
+
+    List<String> listGame = List<String>.filled(s.length, "");
+    database.InsertDB("games", s);
+    database.DropDBPersoGame();
+    database.DropDBStatsGame();
+    int conteTemp = 1;
+    for (var e in s) {
+      if (conteTemp == 10 || conteTemp == 11) {
+        await webScraper.loadWebPage(
+            '/${e['attributes']['href']}characters/growth-rates/default/');
+      } else {
+        await webScraper
+            .loadWebPage('/${e['attributes']['href']}characters/growth-rates/');
+      }
+      var temp = webScraper.getElement("tbody > tr > th", [""]);
+      List<String> listStats = [];
+
+      for (var elem in temp) {
+        listStats.add(elem["title"]);
+      }
+      listStats = listStats.toSet().toList();
+      if (conteTemp == 7) {
+        listStats.removeLast();
+        listStats.removeLast();
+      }
+      String statsTrier = listStats.join(',');
+      database.InsertDBGameStats(conteTemp, statsTrier);
+
+      temp = webScraper.getElement("tbody > tr > td", [""]);
+      double totalTemp = temp.length / listStats.length;
+      for (var i = 0; i < totalTemp; i++) {
+        List<String> listBuffer = [];
+        for (var i = 0; i < listStats.length; i++) {
+          listBuffer.add(temp[0]["title"]);
+          temp.removeAt(0);
+        }
+
+        String persoAjout = listBuffer.join(',');
+        database.InsertDBPerso(conteTemp, persoAjout);
+      }
+
+      conteTemp++;
+    }
+    done = true;
+    setState(() {});
   }
+
+  bool done = false;
 
   @override
   void initState() {
@@ -66,10 +118,12 @@ class _updateDb extends State<updateDb> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Container(
-          child: Stack(children: <Widget>[
-            Text("classe"),
-          ]),
-        ),
+            child: done
+                ? //check if loading is true or false
+                Text("Update Done") //show this text on loading = false
+                : //show progress on loading = true
+                CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.purple))),
       ),
     );
   }

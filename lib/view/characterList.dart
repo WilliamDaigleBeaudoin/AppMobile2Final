@@ -1,10 +1,12 @@
 import 'package:fe_wiki/view/character.dart';
 import 'package:flutter/material.dart';
+import '../DB.dart';
 import '../main.dart';
 import '../toolbox.dart';
 
 class characterList extends StatefulWidget {
-  const characterList({Key? key, required this.game}) : super(key: key);
+  const characterList({Key? key, required this.game, required this.gameId})
+      : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -16,32 +18,19 @@ class characterList extends StatefulWidget {
   // always marked "final".
 
   final String game;
+  final int gameId;
 
   @override
   State<characterList> createState() => _characterList();
 }
 
 class _characterList extends State<characterList> {
-  late List<Widget> listPersonage = [];
+  late List<Perso> listPersonage = [];
 
   @override
   void initState() {
-    listPersonage.add(const BouttonDestinationGames(
-        text: "Richard",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: character(
-          perso: "Richard",
-        )));
-    listPersonage.add(const BouttonDestinationGames(
-        text: "Gaiden",
-        textColor: Colors.black,
-        borderColor: Colors.deepPurple,
-        destination: MyHomePage(
-          title: "wiki",
-        )));
-
     super.initState();
+    select();
   }
 
   @override
@@ -61,10 +50,28 @@ class _characterList extends State<characterList> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: ListView(
-          children: listPersonage,
+        child: ListView.separated(
+          padding: const EdgeInsets.all(8),
+          itemCount: listPersonage == null ? 0 : listPersonage.length,
+          itemBuilder: (BuildContext context, int index) {
+            return BouttonDestinationGames(
+                text: listPersonage[index].name,
+                textColor: Colors.black,
+                borderColor: Colors.deepPurple,
+                destination: character(
+                  perso: listPersonage[index],
+                ));
+          },
+          separatorBuilder: (BuildContext context, int index) =>
+              const Divider(),
         ),
       ),
     );
+  }
+
+  void select() async {
+    listPersonage = await database.SelectDBPersoGame(widget.gameId) ?? [];
+
+    setState(() {});
   }
 }

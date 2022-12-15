@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import '../DB.dart';
 import '../main.dart';
 import '../toolbox.dart';
+
+class StatEtGrowth {
+  final String stats;
+  final String growths;
+
+  const StatEtGrowth({required this.stats, required this.growths});
+}
 
 class character extends StatefulWidget {
   const character({Key? key, required this.perso}) : super(key: key);
@@ -14,19 +22,20 @@ class character extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
-  final String perso;
+  final Perso perso;
 
   @override
   State<character> createState() => _character();
 }
 
 class _character extends State<character> {
-  late String classe;
-
+  late List<StatEtGrowth> listAAficher = [];
+  late List<String> stat = [];
+  late List<String> growth = [];
   @override
   void initState() {
-    classe = "Lord";
     super.initState();
+    select();
   }
 
   @override
@@ -41,17 +50,45 @@ class _character extends State<character> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.perso),
+        title: Text(widget.perso.name),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Container(
-          child: Stack(children: <Widget>[
-            Text(classe),
-          ]),
-        ),
+      body: Container(
+        width: MediaQuery.of(context).size.width,
+        child: DataTable(
+            columns: const <DataColumn>[
+              DataColumn(
+                label: Expanded(
+                  child: Text(
+                    'Stats',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ),
+              DataColumn(
+                label: Expanded(
+                  child: Text(
+                    'Growth',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ),
+            ],
+            rows: listAAficher
+                .map<DataRow>((e) => DataRow(cells: [
+                      DataCell(Text(e.stats)),
+                      DataCell(Text(e.growths))
+                    ]))
+                .toList()),
       ),
     );
+  }
+
+  void select() async {
+    stat = await database.SelectDBGrowthList(widget.perso.gameId) ?? [];
+    growth = widget.perso.growth.split(',');
+    for (var i = 0; i < stat.length; i++) {
+      listAAficher.add(StatEtGrowth(stats: stat[i], growths: growth[i]));
+    }
+    setState(() {});
   }
 }
